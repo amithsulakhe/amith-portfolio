@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { documents } from "@/lib/documents";
 
-const openai = new OpenAI({
-    apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-});
+// Initialize OpenAI client - will be validated in POST handler
+const getOpenAIClient = () => {
+    const apiKey = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+    if (!apiKey) {
+        throw new Error("OpenAI API key is not configured");
+    }
+    return new OpenAI({ apiKey });
+};
 
 export async function POST(request: NextRequest) {
     try {
@@ -63,6 +68,7 @@ ${context}`;
             { role: "user", content: question },
         ];
 
+        const openai = getOpenAIClient();
         const response = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             messages: conversationMessages,
@@ -73,6 +79,14 @@ ${context}`;
         return NextResponse.json({ answer: aiAnswer });
     } catch (error) {
         console.error("Chat API Error:", error);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        const errorDetails = {
+            message: errorMessage,
+            stack: error instanceof Error ? error.stack : undefined,
+        };
+        console.error("Error details:", errorDetails);
+        
+        // Don't expose internal error details to client in production
         return NextResponse.json(
             { error: "Failed to process chat request" },
             { status: 500 }
