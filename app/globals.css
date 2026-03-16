@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0a0a0f;
+  --bg-secondary: #0f0f1a;
+  --bg-card: #13131f;
+  --text-primary: #f0f0ff;
+  --text-secondary: #a0a0c0;
+  --accent: #6366f1;
+  --accent-2: #8b5cf6;
+  --accent-3: #06b6d4;
+  --border: rgba(99, 102, 241, 0.15);
+  --glow: rgba(99, 102, 241, 0.4);
+}
+
+.light {
+  --bg: #f0f2ff;
+  --bg-secondary: #e8eaff;
+  --bg-card: #ffffff;
+  --text-primary: #0a0a1a;
+  --text-secondary: #4a4a6a;
+  --accent: #4f46e5;
+  --accent-2: #7c3aed;
+  --accent-3: #0891b2;
+  --border: rgba(79, 70, 229, 0.2);
+  --glow: rgba(79, 70, 229, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+::selection {
+  background: var(--accent);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 30px var(--glow);
+  transform: translateY(-4px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: white;
+  padding: 0.75rem 2rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px var(--glow);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-primary);
+  padding: 0.75rem 2rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-outline:hover {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.1);
+  transform: translateY(-2px);
+}
+
+section {
+  position: relative;
+  z-index: 1;
+}
