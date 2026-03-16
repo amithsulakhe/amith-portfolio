@@ -13,7 +13,27 @@ const getOpenAIClient = () => {
 
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
+        // Check API key first
+        const apiKey = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+        if (!apiKey) {
+            console.error("❌ OpenAI API key is missing in production");
+            return NextResponse.json(
+                { error: "Server configuration error: API key not found" },
+                { status: 500 }
+            );
+        }
+
+        let body;
+        try {
+            body = await request.json();
+        } catch (parseError) {
+            console.error("❌ Failed to parse request body:", parseError);
+            return NextResponse.json(
+                { error: "Invalid request format" },
+                { status: 400 }
+            );
+        }
+
         const { question, history = [] } = body as { question?: string; history?: { role: string; content: string }[] };
 
         if (!question || typeof question !== "string") {
@@ -69,24 +89,49 @@ ${context}`;
         ];
 
         const openai = getOpenAIClient();
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: conversationMessages,
-        });
+        
+        let response;
+        try {
+            response = await openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: conversationMessages,
+            });
+        } catch (openaiError: any) {
+            console.error("❌ OpenAI API call failed:", {
+                message: openaiError?.message,
+                status: openaiError?.status,
+                code: openaiError?.code,
+                type: openaiError?.type,
+            });
+            throw openaiError;
+        }
 
         const aiAnswer = response.choices[0]?.message?.content ?? "";
 
+        if (!aiAnswer) {
+            console.error("❌ Empty response from OpenAI");
+            return NextResponse.json(
+                { error: "Received empty response from AI" },
+                { status: 500 }
+            );
+        }
+
         return NextResponse.json({ answer: aiAnswer });
     } catch (error) {
-        console.error("Chat API Error:", error);
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        const errorDetails = {
-            message: errorMessage,
-            stack: error instanceof Error ? error.stack : undefined,
-        };
-        console.error("Error details:", errorDetails);
+        const errorStack = error instanceof Error ? error.stack : undefined;
         
-        // Don't expose internal error details to client in production
+        // Log detailed error information for debugging
+        console.error("❌ Chat API Error:", {
+            message: errorMessage,
+            name: error instanceof Error ? error.name : "Unknown",
+            stack: errorStack,
+            // Check for OpenAI-specific errors
+            ...(error && typeof error === 'object' && 'status' in error ? { status: (error as any).status } : {}),
+            ...(error && typeof error === 'object' && 'code' in error ? { code: (error as any).code } : {}),
+        });
+        
+        // Return generic error to client (don't expose internal details)
         return NextResponse.json(
             { error: "Failed to process chat request" },
             { status: 500 }
