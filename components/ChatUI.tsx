@@ -812,9 +812,7 @@ export default function ChatUI() {
                                 )}
                             </button>
                         </form>
-                        <p style={{ textAlign: "center", fontSize: "10px", color: "rgba(255,255,255,0.18)", marginTop: "8px" }}>
-                            AI remembers your full conversation · Powered by GPT-4o-mini
-                        </p>
+                      
                     </div>
                 </div>
             )}

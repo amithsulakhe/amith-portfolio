@@ -84,7 +84,7 @@ export default function Footer() {
                         textAlign: 'center',
                     }}
                 >
-                    © {year} Amith R Sulakhe. Built with Next.js, Tailwind CSS & Framer Motion. Made with ❤️ in Karnataka, India.
+                    © {year} Amith R Sulakhe. Made with ❤️ in Karnataka, India.
                 </motion.p>
             </div>
         </footer>
