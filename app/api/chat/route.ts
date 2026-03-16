@@ -118,6 +118,7 @@ ${context}`;
 
         return NextResponse.json({ answer: aiAnswer });
     } catch (error) {
+        console.error("❌ Chat API Error:", error);
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         const errorStack = error instanceof Error ? error.stack : undefined;
         
@@ -133,8 +134,8 @@ ${context}`;
         
         // Return generic error to client (don't expose internal details)
         return NextResponse.json(
-            { error: "Failed to process chat request" },
-            { status: 500 }
+            { error: errorMessage },
+            { status: 210 }
         );
     }
 }
