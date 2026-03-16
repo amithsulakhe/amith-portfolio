@@ -49,6 +49,8 @@ export default function Hero() {
     const rafLoopRef = useRef<number>(0);
     const lastDrawnRef = useRef(-1);
 
+    const [showResumePreview, setShowResumePreview] = useState(false);
+
     const [loadProgress, setLoadProgress] = useState(0);
     const [framesLoaded, setFramesLoaded] = useState(false);
 
@@ -339,9 +341,14 @@ export default function Hero() {
                             <a href="#projects" className="btn-primary" style={{ textDecoration: 'none' }}>
                                 View Projects →
                             </a>
-                            <a href="/resume.pdf" download className="btn-outline" style={{ textDecoration: 'none' }}>
-                                📄 Download Resume
-                            </a>
+                            <button
+                                type="button"
+                                onClick={() => setShowResumePreview(true)}
+                                className="btn-outline"
+                                style={{ textDecoration: 'none', cursor: 'pointer' }}
+                            >
+                                📄 Preview Resume
+                            </button>
                             <a href="#contact" className="btn-outline" style={{ textDecoration: 'none' }}>
                                 ✉️ Contact Me
                             </a>
@@ -398,6 +405,82 @@ export default function Hero() {
                     )}
                 </section>
             </div>
+
+            {/* Resume preview overlay */}
+            {showResumePreview && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        zIndex: 100000,
+                        background: 'rgba(0,0,0,0.7)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '1rem',
+                    }}
+                    onClick={() => setShowResumePreview(false)}
+                >
+                    <div
+                        style={{
+                            position: 'relative',
+                            width: 'min(900px, 100%)',
+                            height: 'min(80vh, 100%)',
+                            background: '#050816',
+                            borderRadius: '18px',
+                            overflow: 'hidden',
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: 10,
+                                right: 10,
+                                zIndex: 2,
+                                display: 'flex',
+                                gap: '0.5rem',
+                            }}
+                        >
+                            <a
+                                href="/resume.pdf"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn-outline"
+                                style={{ fontSize: '0.8rem', padding: '0.35rem 0.8rem', textDecoration: 'none' }}
+                            >
+                                Open in new tab
+                            </a>
+                            <button
+                                type="button"
+                                onClick={() => setShowResumePreview(false)}
+                                style={{
+                                    borderRadius: '999px',
+                                    border: '1px solid rgba(255,255,255,0.25)',
+                                    background: 'rgba(15,23,42,0.9)',
+                                    color: '#e5e7eb',
+                                    padding: '0.25rem 0.7rem',
+                                    fontSize: '0.8rem',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                ✕ Close
+                            </button>
+                        </div>
+                        <iframe
+                            src="/resume.pdf"
+                            title="Amith R Sulakhe Resume"
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                border: 'none',
+                                background: '#0b1120',
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
         </>
     );
 }
