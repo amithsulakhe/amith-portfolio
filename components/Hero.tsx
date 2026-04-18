@@ -12,6 +12,9 @@ const FRAME_PATHS: string[] = Array.from({ length: FRAME_COUNT }, (_, i) =>
 // How many viewport heights the sticky section lasts (determines how long frames play)
 const SCROLL_HEIGHT_VH = 280;
 
+/** Loader shows smooth 0%→100% progress over this duration, then the hero unlocks. */
+const LOADER_MAX_MS = 2000;
+
 /* ─── Top loading progress bar ───────────────────────────────────── */
 function TopLoader({ progress }: { progress: number }) {
     return (
@@ -28,7 +31,7 @@ function TopLoader({ progress }: { progress: number }) {
                     height: '100%',
                     width: `${progress}%`,
                     background: 'linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4)',
-                    transition: 'width 0.25s ease-out',
+                    transition: 'none',
                     boxShadow: '0 0 12px rgba(99,102,241,0.8)',
                     borderRadius: '0 3px 3px 0',
                 }}
@@ -52,7 +55,10 @@ export default function Hero() {
     const [showResumePreview, setShowResumePreview] = useState(false);
 
     const [loadProgress, setLoadProgress] = useState(0);
+    /** Hero interactive after loader animation completes at 100%. */
     const [framesLoaded, setFramesLoaded] = useState(false);
+    const loaderDoneRef = useRef(false);
+    const progressAnimRef = useRef<number>(0);
 
     // ── Draw a frame to canvas, maintaining cover aspect ratio ───────
     const drawFrame = useCallback((index: number) => {
@@ -86,33 +92,59 @@ export default function Hero() {
         return () => ro.disconnect();
     }, [drawFrame]);
 
-    // ── Preload all frames, track progress, lock scroll while loading ─
+    // ── Preload frames; loader UI animates 0→100% over LOADER_MAX_MS (decoupled from network) ─
     useEffect(() => {
         if (typeof window === 'undefined') return;
         document.body.style.overflow = 'hidden';
+        loaderDoneRef.current = false;
+        setLoadProgress(0);
 
-        let loadedCount = 0;
+        const finishLoader = () => {
+            if (loaderDoneRef.current) return;
+            loaderDoneRef.current = true;
+            cancelAnimationFrame(progressAnimRef.current);
+            progressAnimRef.current = 0;
+            setLoadProgress(100);
+            setFramesLoaded(true);
+            document.body.style.overflow = '';
+            (window as { __heroLoaded?: boolean }).__heroLoaded = true;
+            window.dispatchEvent(new CustomEvent('heroLoaded'));
+            const img0 = imagesRef.current[0];
+            if (img0?.complete && img0.naturalWidth) drawFrame(0);
+        };
+
+        const t0 = performance.now();
+        let lastShown = -1;
+        const tick = (now: number) => {
+            const elapsed = now - t0;
+            const pct = Math.min(100, Math.round((elapsed / LOADER_MAX_MS) * 100));
+            if (pct !== lastShown) {
+                lastShown = pct;
+                setLoadProgress(pct);
+            }
+            if (elapsed < LOADER_MAX_MS) {
+                progressAnimRef.current = requestAnimationFrame(tick);
+            } else {
+                finishLoader();
+            }
+        };
+        progressAnimRef.current = requestAnimationFrame(tick);
+
         const images: HTMLImageElement[] = Array.from({ length: FRAME_COUNT }, (_, i) => {
             const img = new window.Image();
             img.onload = img.onerror = () => {
-                loadedCount++;
-                const pct = Math.round((loadedCount / FRAME_COUNT) * 100);
-                setLoadProgress(pct);
-                if (loadedCount === 1) drawFrame(0); // show first frame ASAP
-                if (loadedCount >= FRAME_COUNT) {
-                    setFramesLoaded(true);
-                    document.body.style.overflow = '';
-                    // Signal ChatUI that loading is complete
-                    (window as { __heroLoaded?: boolean }).__heroLoaded = true;
-                    window.dispatchEvent(new CustomEvent('heroLoaded'));
-                }
+                if (i === 0) drawFrame(0);
             };
             img.src = FRAME_PATHS[i];
             return img;
         });
         imagesRef.current = images;
 
-        return () => { document.body.style.overflow = ''; };
+        return () => {
+            cancelAnimationFrame(progressAnimRef.current);
+            progressAnimRef.current = 0;
+            document.body.style.overflow = '';
+        };
     }, [drawFrame]);
 
     // ── Smooth rAF loop: lerp currentFrame → targetFrame, redraw ─────
@@ -160,10 +192,8 @@ export default function Hero() {
 
     return (
         <>
-            {/* Top progress bar while loading */}
             {!framesLoaded && <TopLoader progress={loadProgress} />}
 
-            {/* Loading overlay */}
             {!framesLoaded && (
                 <div
                     style={{
@@ -188,7 +218,7 @@ export default function Hero() {
                         <div style={{
                             height: '100%', width: `${loadProgress}%`,
                             background: 'linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4)',
-                            transition: 'width 0.2s ease-out',
+                            transition: 'none',
                         }} />
                     </div>
                     <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.78rem', letterSpacing: '0.1em' }}>
